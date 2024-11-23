@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>
+<style>
+#myBtn {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 30px;
+  z-index: 99;
+  font-size: 18px;
+  border: none;
+  outline: none;
+  color: white;
+  cursor: pointer;
+  padding: 15px;
+  border-radius: 4px;
+}
+</style>
+</head>
+<body>
+<button onclick="topFunction()" id="myBtn" class="btn btn-success" title="Go to top"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5"/>
+</svg></button>
+<nav class="navbar navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">HackSphere</a>
+  </div>
+</nav>
+<div id="exampleModal" class="modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <input type="hidden" name="port" id="port"/>
+      <input type="hidden" name="dir1" id="dir1"/>
+      <input type="hidden" name="dir2" id="dir2"/>
+      <input type="hidden" name="index" id="index"/>
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Modal title</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="modalBodyText">Click "Compile & Run" to start docker environment, "Stop" to stop daemon.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" id="stopRun" value="stopRun">Stop</button>
+        <button type="button" id="compileRun" value="compileRun" class="btn btn-primary">Compile & Run</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="container p-5">
+<div id="map" style="width: 100%; height: 60vh"></div>
+</div>
+<div class="container">
+<div class="accordion" id="accordionExample">
+  {% for marker in data %}
+  {% if marker.active == 1 %}
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="heading{{ loop.index }}">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+        {{ marker.name }} #{{loop.index}}
+      </button>
+    </h2>
+    <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <p><a href="http://{{request.host.split(':')[0]}}:{{ marker.port }}" target="_blank" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">http://{{request.host.split(':')[0]}}:{{ marker.port }}</a></p>
+        <zero-md src="/static/{{marker.dir1}}/{{marker.dir2}}/README.md"></zero-md>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+</div>
+<script>
+var myModal = new bootstrap.Modal(document.getElementById("exampleModal"), {});
+/*var markers = [
+    { name: 'CairoSignal', coords: [26.8206, 30.8025], dir1: 'mongo-express', dir2: 'CVE-2019-10758', port: '8081' },
+    { name: 'EmeraldRelay', coords: [54.6078, -5.9264], style: {
+        initial: {
+          fill: '#018749'
+        }
+      },
+      dir1: 'couchdb', dir2: 'CVE-2017-12636',
+      port: '5984'
+    },
+    {
+      name: 'MapleMesh',
+      coords: [37.0902, -95.7129],
+      dir1: 'fastjson', dir2: '1.2.47-rce',
+      port: '8090'
+      // Add style for this particular marker
+      // Keep in mind `style` object is merged with `markerStyle.initial`
+    },
+    { name: 'DragonBeacon', coords: [46.5682, 86.1025], dir1: 'libssh', dir2: 'CVE-2018-10933', port: '2222' }
+  ];*/
+var markers = JSON.parse('{{data|tojson|safe}}');
+var map = new jsVectorMap({
+  selector: "#map",
+  map: "world",
+  markers: markers,
+  onMarkerClick: function(event, index) {
+    // alter the weburl
+    // alert(markers[index].name);
+    $('#modalTitle').text(markers[index].name);
+    $('#modalBodyText').text('Click "Compile & Run" to start docker environment, "Stop" to stop daemon.');
+    $('#dir1').val(markers[index].dir1);
+    $('#dir2').val(markers[index].dir2);
+    $('#port').val(markers[index].port);
+    $('#index').val(index);
+    myModal.show();
+  }
+});
+$('#exampleModal').on("hide.bs.modal", function() {
+	location.reload();
+})
+var headingOne = document.getElementsByClassName('accordion-item');
+if(headingOne[0]){
+    const divBottom = headingOne[0].offsetTop + headingOne[0].offsetHeight;
+    const viewportHeight = window.innerHeight;
+
+    window.scrollTo({
+        top: divBottom - viewportHeight,
+        behavior: "smooth"
+    });
+}
+</script>
+<script>
+$("#compileRun").click(function(e){
+        var data = {'port': $('#port').val(), 'dir1': $('#dir1').val(), 'dir2': $('#dir2').val(), 'index': $('#index').val()};
+        $('#modalBodyText').html('<div class="spinner-border text-primary" role="status"></div>');
+        $.getJSON({
+            url: "/getData",
+            data: $.param(data),
+            success: function(data){
+                console.log(data.var1)
+                $('#modalBodyText').html(data.var1);
+                myModal.show();
+            }
+        });
+});
+$("#stopRun").click(function(e){
+        var data = {'port': $('#port').val(), 'dir1': $('#dir1').val(), 'dir2': $('#dir2').val(), 'index': $('#index').val()};
+        $('#modalBodyText').html('<div class="spinner-border text-primary" role="status"></div>');
+        $.getJSON({
+            url: "/getDataStop",
+            data: $.param(data),
+            success: function(data){
+                console.log(data.var1)
+                $('#modalBodyText').html(data.var1);
+                myModal.show();
+            }
+        });
+});   
+</script>
+<script>
+// Get the button
+let mybutton = document.getElementById("myBtn");
+
+// When the user scrolls down 20px from the top of the document, show the button
+window.onscroll = function() {scrollFunction()};
+
+function scrollFunction() {
+  if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+    mybutton.style.display = "block";
+  } else {
+    mybutton.style.display = "none";
+  }
+}
+
+// When the user clicks on the button, scroll to the top of the document
+function topFunction() {
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+}
+</script>
+</body>
