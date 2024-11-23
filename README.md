@@ -24,3 +24,9 @@ docker build --tag hack-sphere .
 
 # Run the container
 docker run --network=host -v /var/run/docker.sock:/var/run/docker.sock -p 5000:5000 hack-sphere
+```
+
+Paste in browser the URL that appears in docker run logs and you should be able to interact with the app:
+
+![Schermata a 2024-11-23 15-09-40](https://github.com/user-attachments/assets/699d6eb4-7087-4d30-bbd1-665af3c78323)
+
