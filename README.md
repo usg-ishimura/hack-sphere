@@ -1,5 +1,5 @@
 # HackSphere
-HackSphere is a dockerized app whose purpose is to create the interface for a pentest lab.
+HackSphere is a dockerized app whose purpose is to create the UI for a pentest lab.
 
 ## Installation
 Install Docker on Ubuntu 22.04:
