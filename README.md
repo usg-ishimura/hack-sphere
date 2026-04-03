@@ -26,5 +26,5 @@ docker build --tag hack-sphere .
 docker run --network=host -v /var/run/docker.sock:/var/run/docker.sock -p 5000:5000 hack-sphere
 ```
 
-Paste in browser the URL that appears in docker run logs and you should be able to interact with the app.
+Ctrl click the URL that appears in docker run logs and you should be able to interact with the app.
 
